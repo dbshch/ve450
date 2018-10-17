@@ -15,6 +15,7 @@ import zipfile
 # from urllib.request import Request, urlopen
 import flask
 import json
+import run_job
 redis = Redis(host="redis", db=0, socket_connect_timeout=2, socket_timeout=2)
 
 app = Flask(__name__)
@@ -74,14 +75,14 @@ def sendfile():
     if not zipfile.is_zipfile(os.path.join(running_dir, ref_file.filename)):
         return (flask.jsonify(**context), 401)
     
-    zip_output = zipfile.ZipFile(os.path.join(running_dir, ref_file.filename))
+    # zip_output = zipfile.ZipFile(os.path.join(running_dir, ref_file.filename))
     
     # all the files are in the running dir
-    os.chdir(running_dir)
-    zip_output.extractall()
-    print(os.getcwd())
+    # os.chdir(running_dir)
+    # zip_output.extractall()
+    # print(os.getcwd())
 
-    thrd = Process(target=run_script, args=(str(request_json["command"]), ))
+    thrd = Process(target=run_script, args=(running_dir, ref_file.filename, ))
     g.running_thread = thrd
     thrd.start()
     return (flask.jsonify(**context), 201)
@@ -109,15 +110,17 @@ def stopthread():
     g.running_thread.terminate()
 
 
-def run_script(cmd):
+def run_script(path, zip_file):
     # path, file = os.path.split(input_file)
     # os.chdir(path)
+    zip_output = zipfile.ZipFile(os.path.join(path, zip_file))
+    zip_output.extractall(path)
     
     # outputFileName = "stdout.txt"
     # os.system('python ' + os.path.join("/", input_file) + " > " + outputFileName)
 
     outputFileName = "_stdout.txt"
-    os.system(cmd + " > " + outputFileName)
+    os.system("./run_job.py " + path + " > " + outputFileName)
     url = "http://" + app.config["central_ip"] + ":8000/api/recvfile"
     self_info = {
         "ip": app.config["self_ip"],
