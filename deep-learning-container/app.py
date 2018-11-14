@@ -120,7 +120,7 @@ def run_script(path, zip_file):
     # os.system('python ' + os.path.join("/", input_file) + " > " + outputFileName)
 
     outputFileName = "_stdout.txt"
-    os.system("./run_job.py " + path + " > " + outputFileName)
+    os.system("run_job.py " + path + " > " + outputFileName)
     url = "http://" + app.config["central_ip"] + ":8000/api/recvfile"
     self_info = {
         "ip": app.config["self_ip"],
